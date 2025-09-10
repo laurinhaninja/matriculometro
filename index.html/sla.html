@@ -1,215 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Matrículometro — metas por turma</title>
-  <style>
-    :root{
-      --bg:#f3f4f6;
-      --ink:#0f172a;
-      --muted:#64748b;
-      --radius:18px;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Matrículometro — metas por turma</title>
+    <link href="css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Matrículometro 2026 — Educação Adventista</h1>
+        <p>
+          Insira o <strong>alvo</strong> e as
+          <strong>matrículas realizadas</strong>. O termômetro sobe
+          automaticamente.
+        </p>
+        <p id="stats"></p>
+      </header>
 
-      /* Paleta */
-      --c1:#fef9c3;  /* amarelo */
-      --c2:#d9f99d;  /* verde */
-      --c3:#bae6fd;  /* azul */
-      --c4:#fbcfe8;  /* rosa */
-      --c5:#ddd6fe;  /* lilás */
-      --c6:#fecaca;  /* vermelho claro */
-    }
+      <div id="grid" class="grid"></div>
 
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
-      background:var(--bg);
-      color:var(--ink);
-      display:flex;
-      justify-content:center;
-      padding:24px
-    }
+      <footer>Valores ficam salvos no navegador (localStorage).</footer>
+    </div>
 
-    .container{width:min(1200px,100%)}
-    header{text-align:center; margin-bottom:18px}
-    header h1{margin:0 0 6px; font-size:clamp(22px,3.5vw,36px); color:#0ea5e9}
-    header p{margin:0; color:var(--muted)}
-    #stats{margin-top:6px; font-weight:500}
-
-    .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:18px}
-    .card{
-      border-radius:var(--radius);
-      box-shadow:0 6px 20px rgba(2,6,23,.08);
-      padding:16px 16px 14px;
-      display:flex; flex-direction:column; gap:12px;
-      transition:transform .2s;
-    }
-    .card:hover{transform:translateY(-4px)}
-
-    .card h2{font-size:18px; margin:0}
-    .meta{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:13px}
-    .badge{margin-left:auto; font-weight:600; background:#fff; color:#0f172a; padding:6px 10px; border-radius:999px}
-
-    .thermo{position:relative; height:56px; display:flex; align-items:center; gap:16px}
-    .bulb{width:40px; height:40px; border-radius:999px; background:#fff; box-shadow:inset 0 0 0 3px #111, 0 6px 10px rgba(2,6,23,.12); position:relative}
-    .bulb::after{content:""; position:absolute; inset:6px; border-radius:999px; background:#ef4444; opacity:var(--fill,0)}
-    .tube{flex:1; height:22px; background:#fff; border-radius:999px; box-shadow:inset 0 0 0 3px #111, 0 6px 10px rgba(2,6,23,.08); position:relative; overflow:hidden}
-    .fill{position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #22c55e, #f59e0b 60%, #ef4444)}
-    .ticks{position:absolute; inset:0; pointer-events:none}
-    .tick{position:absolute; top:-8px; width:2px; height:38px; background:#111; opacity:.6}
-    .numbers{display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:2px}
-
-    .inputs{display:grid; grid-template-columns:repeat(2,1fr); gap:8px}
-    .field{display:flex; flex-direction:column; gap:6px}
-    .field label{font-size:13px; color:var(--muted)}
-    .field input{
-      height:40px; border-radius:12px; border:1px solid #e5e7eb;
-      padding:0 12px; font-size:8px; background:#fff;
-      outline:none; transition:border .2s, box-shadow .2s
-    }
-    .field input:focus{border-color:#0ea5e9; box-shadow:0 0 0 4px rgba(14,165,233,.15)}
-
-    footer{margin-top:18px; text-align:center; color:var(--muted); font-size:12px}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Matrículometro 2026 — Educação Adventista</h1>
-      <p>Insira o <strong>alvo</strong> e as <strong>matrículas realizadas</strong>. O termômetro sobe automaticamente.</p>
-      <p id="stats"></p>
-    </header>
-
-    <div id="grid" class="grid"></div>
-
-    <footer>Valores ficam salvos no navegador (localStorage).</footer>
-  </div>
-
-  <script>
-    // ===================== Configuração das turmas =====================
-    const TURMAS = [
-      { nome: "Maternal manhã", alvo: 0, cor:"var(--c1)" },
-      { nome: "Maternal tarde", alvo: 0, cor:"var(--c1)" },
-      { nome: "Nível 1 manhã", alvo: 0, cor:"var(--c2)" },
-      { nome: "Nível 1 tarde", alvo: 0, cor:"var(--c2)" },
-      { nome: "Nível 2 manhã", alvo: 0, cor:"var(--c3)" },
-      { nome: "Nível 2 tarde", alvo: 0, cor:"var(--c3)" },
-      { nome: "Nível 3 manhã", alvo: 0, cor:"var(--c4)" },
-      { nome: "Nível 3 tarde", alvo: 0, cor:"var(--c4)" },
-      { nome: "1º ano manhã", alvo: 0, cor:"var(--c5)" },
-      { nome: "1º ano tarde", alvo: 0, cor:"var(--c5)" },
-      { nome: "2º ano manhã", alvo: 0, cor:"var(--c6)" },
-      { nome: "2º ano tarde", alvo: 0, cor:"var(--c6)" },
-      { nome: "3º ano manhã", alvo: 0, cor:"var(--c2)" },
-      { nome: "3º ano tarde", alvo: 0, cor:"var(--c2)" },
-      { nome: "4º ano manhã", alvo: 0, cor:"var(--c3)" },
-      { nome: "4º ano tarde", alvo: 0, cor:"var(--c3)" },
-      { nome: "5º ano manhã", alvo: 0, cor:"var(--c4)" },
-      { nome: "5º ano tarde", alvo: 0, cor:"var(--c4)" },
-      { nome: "6º ano manhã", alvo: 0, cor:"var(--c5)" },
-      { nome: "6º ano tarde", alvo: 0, cor:"var(--c5)" },
-      { nome: "7º ano manhã", alvo: 0, cor:"var(--c1)" },
-      { nome: "7º ano tarde", alvo: 0, cor:"var(--c1)" },
-      { nome: "8º ano manhã", alvo: 0, cor:"var(--c2)" },
-      { nome: "8º ano tarde", alvo: 0, cor:"var(--c2)" },
-      { nome: "9º ano manhã", alvo: 0, cor:"var(--c6)" }
-    ];
-
-    const KEY = "matriculometro-colorido";
-    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-    const META_TOTAL = 580;
-
-    // ================================ Utilidades ================================
-    function clamp(n, min, max){return Math.max(min, Math.min(max, n));}
-    function mkTick(container, fraction){
-      const t = document.createElement("div"); 
-      t.className = "tick"; 
-      t.style.left = `${clamp(fraction*100,0,100)}%`; 
-      container.appendChild(t);
-    }
-    function percent(v, a){ if(!a || a<=0) return 0; return clamp((v/a)*100, 0, 100); }
-    function format(n){ return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(n||0); }
-
-    // =============================== Construção UI ==============================
-    const grid = document.getElementById("grid");
-    function buildCard(idx, turma){
-      const state = saved[turma.nome] || { alvo: turma.alvo||0, atual: 0 };
-
-      const card = document.createElement("section");
-      card.className = "card";
-      card.style.background = turma.cor;
-      card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px">
-          <h2>${turma.nome}</h2>
-          <span class="badge" data-badge>0%</span>
-        </div>
-        <div class="meta" data-meta></div>
-        <div class="thermo">
-          <div class="bulb" data-bulb></div>
-          <div class="tube">
-            <div class="fill" data-fill></div>
-            <div class="ticks" data-ticks></div>
-          </div>
-        </div>
-        <div class="numbers"><span data-start>0</span><span data-mid>50%</span><span data-end>100%</span></div>
-        <div class="inputs">
-          <div class="field">
-            <label>Alvo de matrículas</label>
-            <input type="number" min="0" step="1" value="${state.alvo}" data-alvo>
-          </div>
-          <div class="field">
-            <label>Matrículas realizadas</label>
-            <input type="number" min="0" step="1" value="${state.atual}" data-atual>
-          </div>
-        </div>
-      `;
-
-      const badge = card.querySelector('[data-badge]');
-      const fill = card.querySelector('[data-fill]');
-      const ticks = card.querySelector('[data-ticks]');
-      const bulb = card.querySelector('[data-bulb]');
-      const alvoInput = card.querySelector('[data-alvo]');
-      const atualInput = card.querySelector('[data-atual]');
-      const meta = card.querySelector('[data-meta]');
-
-      [0,.25,.5,.75,1].forEach(fr => mkTick(ticks, fr));
-
-      function update(){
-        const alvo = Number(alvoInput.value||0);
-        const atual = Number(atualInput.value||0);
-        const p = percent(atual, alvo);
-        fill.style.width = p + "%";
-        badge.textContent = Math.round(p) + "%";
-        bulb.style.setProperty('--fill', String(p/100));
-        meta.innerHTML = `
-          <span>Alvo: <strong>${format(alvo)}</strong></span>
-          <span>Realizadas: <strong>${format(atual)}</strong></span>
-          <span>Restantes: <strong>${format(Math.max(alvo-atual,0))}</strong></span>`;
-        saved[turma.nome] = { alvo, atual };
-        localStorage.setItem(KEY, JSON.stringify(saved));
-        updateStats();
-      }
-
-      alvoInput.addEventListener('input', update);
-      atualInput.addEventListener('input', update);
-      update();
-      return card;
-    }
-
-    function updateStats(){
-      const statsEl = document.getElementById('stats');
-      let totalAlvo = 0, totalAtual = 0;
-      TURMAS.forEach(t=>{
-        const s = saved[t.nome] || { alvo: t.alvo||0, atual: 0 };
-        totalAlvo += Number(s.alvo||0);
-        totalAtual += Number(s.atual||0);
-      });
-      statsEl.textContent = `Progresso geral: ${format(totalAtual)} / ${format(totalAlvo)} (${totalAlvo?Math.round((totalAtual/totalAlvo)*100):0}%)`;
-    }
-
-    TURMAS.forEach((t,i)=> grid.appendChild(buildCard(i, t)));
-    updateStats();
-  </script>
-</body>
+    <script src="js/script.js"></script>
+  </body>
 </html>
