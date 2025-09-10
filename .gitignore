@@ -1,4 +1,2 @@
-# Arquivos/Pasta que não vai para github
-
-# Exemplo:
+node_modules/
 .env
